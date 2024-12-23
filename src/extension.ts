@@ -1,34 +1,8 @@
 import * as vscode from "vscode";
 import axios, { options } from "axios";
 import { MyTreeDataProvider, MyTreeItem } from "./TreeDataProvider";
-import moment from "moment";
+import { Time } from "./time";
 
-
-export class Time {
-  constructor() { }
-
-  private waktu = new Date();
-
-  getHours(): number {
-
-    this.waktu = new Date();
-    return this.waktu.getHours();
-  }
-}
-
-export class Location{
-  constructor() { }
-
-  private location = "1219";
-
-  getLocation(): string {
-    return this.location;
-  }
-
-  setLocation(location: string): void {
-    this.location = location;
-  }
-}
 
 export function activate(context: vscode.ExtensionContext) {
   // Membuat item di status bar
@@ -42,7 +16,6 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Membuat TreeDataProvider
   const treeDataProvider = new MyTreeDataProvider();
-  const time = new Time();
   vscode.window.registerTreeDataProvider("myTreeView", treeDataProvider);
 
   // Fungsi untuk hit API
@@ -61,7 +34,7 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.window.showInformationMessage(
         data.id,
         { modal: true },
-        { title: "Okee" }
+        { title: "Syukron" }
       );
 
       // Update TreeView
@@ -75,61 +48,62 @@ export function activate(context: vscode.ExtensionContext) {
 
   const fetchDataWaktuSholat = async () => {
     try {
-      const date = moment(new Date()).format("YYYY-MM-DD");
 
-      const now = new Date().getHours() + ":" + new Date().getMinutes();
+      const time = new Time().getHours();
 
-      const response = await axios.get(`https://api.myquran.com/v2/sholat/jadwal/1219/${date}`);
+      const now = time.waktu;
+
+      const response = await axios.get(`https://api.myquran.com/v2/sholat/jadwal/1219/${time.tanggal}`);
 
       const data = response.data.data.jadwal;
 
       const waktu: { waktu: string, imsak: string, subuh: string, terbit: string, dhuha: string, dzuhur: string, ashar: string, maghrib: string, isya: string } = data;
 
       if (now === waktu.imsak) {
-        vscode.window.showInformationMessage(
-          "Waktu imsak",
+        vscode.window.showWarningMessage(
+          `Waktu imsak sekarang: ${now}`,
           { modal: true },
           { title: "Okee" }
         );
       } else if (now === waktu.subuh) {
-        vscode.window.showInformationMessage(
-          "Waktu subuh",
+        vscode.window.showWarningMessage(
+          `Waktu subuh sekarang: ${now}`,
           { modal: true },
           { title: "Okee" }
         );
       } else if (now === waktu.terbit) {
-        vscode.window.showInformationMessage(
-          "Waktu terbit",
+        vscode.window.showWarningMessage(
+          `Waktu terbit sekarang: ${now}`,
           { modal: true },
           { title: "Okee" }
         );
       } else if (now === waktu.dhuha) {
-        vscode.window.showInformationMessage(
-          "Waktu dhuha",
+        vscode.window.showWarningMessage(
+          `Waktu dhuha sekarang: ${now}`,
           { modal: true },
           { title: "Okee" }
         );
       } else if (now === waktu.dzuhur) {
-        vscode.window.showInformationMessage(
-          "Waktu dzuhur",
+        vscode.window.showWarningMessage(
+          `Waktu dzuhur sekarang: ${now}`,
           { modal: true },
           { title: "Okee" }
         );
       } else if (now === waktu.ashar) {
-        vscode.window.showInformationMessage(
-          "Waktu ashar",
+        vscode.window.showWarningMessage(
+          `Waktu ashar sekarang: ${now}`,
           { modal: true },
           { title: "Okee" }
         );
       } else if (now === waktu.maghrib) {
-        vscode.window.showInformationMessage(
-          "Waktu maghrib",
+        vscode.window.showWarningMessage(
+          `Waktu maghrib sekarang: ${now}`,
           { modal: true },
           { title: "Okee" }
         );
       } else if (now === waktu.isya) {
-        vscode.window.showInformationMessage(
-          "Waktu isya",
+        vscode.window.showWarningMessage(
+          `Waktu isya sekarang: ${now}`,
           { modal: true },
           { title: "Okee" }
         );
