@@ -15,7 +15,7 @@
     "commands": [
       {
         "command": "extension.showPopup",
-        "title": "Hello World"
+        "title": "Start As A Muslim Developer"
       }
     ],
     "views": {
