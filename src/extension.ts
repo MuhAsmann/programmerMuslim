@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import axios from "axios";
 import { Time } from "./time";
 import { LocationInterface, ResponseInterface, WaktuSholat } from "./inteface";
+import moment from "moment";
 
 
 const getAllLocation = async () => {
@@ -43,16 +44,12 @@ export async function activate(context: vscode.ExtensionContext) {
   statusBarItem.text = "Fetching data...";
   statusBarItem.show();
 
-  // Membuat TreeDataProvider
-  // const treeDataProvider = new MyTreeDataProvider();
-  // vscode.window.registerTreeDataProvider("myTreeView", treeDataProvider);
-
   let locationId: LocationInterface;
 
   const listLocation = await getAllLocation();
   let waktu: WaktuSholat;
   const now = new Time().getHours().waktu;
-
+  let reminderBeforeValue : number;
   if (listLocation) {
     const quickPickItems = listLocation.map(location => ({ label: location.lokasi, id: location.id }));
 
@@ -64,6 +61,21 @@ export async function activate(context: vscode.ExtensionContext) {
       locationId = { id: selectedLocation.id, lokasi: selectedLocation.label };
       waktu = await getJadwalSholat(locationId);
     }
+
+    const reminderBefore = await vscode.window.showInputBox(
+      {
+        placeHolder: 'Masukkan waktu reminder sebelum waktu sholat (menit)',
+        prompt: 'Contoh: 5',
+        validateInput: (value) => {
+          if (isNaN(Number(value))) {
+            return 'Harus berupa angka';
+          }
+          return null;
+        }
+      }
+    );
+
+    reminderBeforeValue = Number(reminderBefore).valueOf() * 60000;
   }
 
   const isHadistSuggetion = await vscode.window.showQuickPick(
@@ -72,6 +84,25 @@ export async function activate(context: vscode.ExtensionContext) {
       placeHolder: 'Apakah ingin mendapatkan hadist?',
     }
   );
+
+  let timeReminder;
+
+  if (!isHadistSuggetion) {
+    timeReminder = await vscode.window.showInputBox(
+      {
+        placeHolder: 'Masukkan waktu popup hadist (menit)',
+        prompt: 'Contoh: 5',
+        validateInput: (value) => {
+          if (isNaN(Number(value))) {
+            return 'Harus berupa angka';
+          }
+          return null;
+        }
+      }
+    );
+  }
+
+  const timeReminderValue = Number(timeReminder).valueOf() * 60000;
   // Fungsi untuk hit API
   const fetchData = async () => {
     try {
@@ -91,9 +122,6 @@ export async function activate(context: vscode.ExtensionContext) {
         { title: "Syukron" }
       );
 
-      // Update TreeView
-      // const items = [new MyTreeItem(data.id, vscode.TreeItemCollapsibleState.None)];
-      // treeDataProvider.refresh(items);
     } catch (error) {
       statusBarItem.text = "Failed to fetch data";
       console.error(error);
@@ -104,54 +132,118 @@ export async function activate(context: vscode.ExtensionContext) {
   const fetchDataWaktuSholat = async () => {
     try {
 
-      if (now === waktu.imsak) {
-        vscode.window.showWarningMessage(
-          `Waktu imsak sekarang: ${now}`,
-          { modal: true },
-          { title: "Okee" }
-        );
-      } else if (now === waktu.subuh) {
-        vscode.window.showWarningMessage(
-          `Waktu subuh sekarang: ${now}`,
-          { modal: true },
-          { title: "Okee" }
-        );
-      } else if (now === waktu.terbit) {
-        vscode.window.showWarningMessage(
-          `Waktu terbit sekarang: ${now}`,
-          { modal: true },
-          { title: "Okee" }
-        );
-      } else if (now === waktu.dhuha) {
-        vscode.window.showWarningMessage(
-          `Waktu dhuha sekarang: ${now}`,
-          { modal: true },
-          { title: "Okee" }
-        );
-      } else if (now === waktu.dzuhur) {
-        vscode.window.showWarningMessage(
-          `Waktu dzuhur sekarang: ${now}`,
-          { modal: true },
-          { title: "Okee" }
-        );
-      } else if (now === waktu.ashar) {
-        vscode.window.showWarningMessage(
-          `Waktu ashar sekarang: ${now}`,
-          { modal: true },
-          { title: "Okee" }
-        );
-      } else if (now === waktu.maghrib) {
-        vscode.window.showWarningMessage(
-          `Waktu maghrib sekarang: ${now}`,
-          { modal: true },
-          { title: "Okee" }
-        );
-      } else if (now === waktu.isya) {
-        vscode.window.showWarningMessage(
-          `Waktu isya sekarang: ${now}`,
-          { modal: true },
-          { title: "Okee" }
-        );
+      if (now === waktu.imsak || now === moment(waktu.imsak).subtract(reminderBeforeValue, 'minutes').format('HH:mm')) {
+        if (now === waktu.imsak) {
+          vscode.window.showWarningMessage(
+            `Waktu imsak sekarang: ${now}`,
+            { modal: true },
+            { title: "Okee" }
+          );
+        } else {
+          vscode.window.showWarningMessage(
+            `Waktu imsak akan segera tiba: ${now}`,
+            { modal: true },
+            { title: "Okee" }
+          );
+        }
+      } else if (now === waktu.subuh || now === moment(waktu.subuh).subtract(reminderBeforeValue, 'minutes').format('HH:mm')) {
+        if (now === waktu.subuh) {
+          vscode.window.showWarningMessage(
+            `Waktu subuh sekarang: ${now}`,
+            { modal: true },
+            { title: "Okee" }
+          );
+        } else {
+          vscode.window.showWarningMessage(
+            `Waktu subuh akan segera tiba: ${now}`,
+            { modal: true },
+            { title: "Okee" }
+          );
+        }
+      } else if (now === waktu.terbit || now === moment(waktu.terbit).subtract(reminderBeforeValue, 'minutes').format('HH:mm')) {
+        if (now === waktu.terbit) {
+          vscode.window.showWarningMessage(
+            `Waktu terbit sekarang: ${now}`,
+            { modal: true },
+            { title: "Okee" }
+          );
+        } else {
+          vscode.window.showWarningMessage(
+            `Waktu terbit akan segera tiba: ${now}`,
+            { modal: true },
+            { title: "Okee" }
+          );
+        }
+      } else if (now === waktu.dhuha || now === moment(waktu.dhuha).subtract(reminderBeforeValue, 'minutes').format('HH:mm')) {
+        if (now === waktu.dhuha) {
+          vscode.window.showWarningMessage(
+            `Waktu dhuha sekarang: ${now}`,
+            { modal: true },
+            { title: "Okee" }
+          );
+        } else {
+          vscode.window.showWarningMessage(
+            `Waktu dhuha akan segera tiba: ${now}`,
+            { modal: true },
+            { title: "Okee" }
+          );
+        }
+      } else if (now === waktu.dzuhur || now === moment(waktu.dzuhur).subtract(reminderBeforeValue, 'minutes').format('HH:mm')) {
+        if (now === waktu.dzuhur) {
+          vscode.window.showWarningMessage(
+            `Waktu dzuhur sekarang: ${now}`,
+            { modal: true },
+            { title: "Okee" }
+          );
+        } else {
+          vscode.window.showWarningMessage(
+            `Waktu dzuhur akan segera tiba: ${now}`,
+            { modal: true },
+            { title: "Okee" }
+          );
+        }
+      } else if (now === waktu.ashar || now === moment(waktu.ashar).subtract(reminderBeforeValue, 'minutes').format('HH:mm')) {
+        if (now === waktu.ashar) {
+          vscode.window.showWarningMessage(
+            `Waktu ashar sekarang: ${now}`,
+            { modal: true },
+            { title: "Okee" }
+          );
+        } else {
+          vscode.window.showWarningMessage(
+            `Waktu ashar akan segera tiba: ${now}`,
+            { modal: true },
+            { title: "Okee" }
+          );
+        }
+      } else if (now === waktu.maghrib || now === moment(waktu.maghrib).subtract(reminderBeforeValue, 'minutes').format('HH:mm')) {
+        if (now === waktu.maghrib) {
+          vscode.window.showWarningMessage(
+            `Waktu maghrib sekarang: ${now}`,
+            { modal: true },
+            { title: "Okee" }
+          );
+        } else {
+          vscode.window.showWarningMessage(
+            `Waktu maghrib akan segera tiba: ${now}`,
+            { modal: true },
+            { title: "Okee" }
+          );
+        }
+      } else if (now === waktu.isya || now === moment(waktu.isya).subtract(reminderBeforeValue, 'minutes').format('HH:mm')) {
+        if (now === waktu.isya) {
+          vscode.window.showWarningMessage(
+            `Waktu isya sekarang: ${now}`,
+            { modal: true },
+            { title: "Okee" }
+          );
+        } else {
+          vscode.window.showWarningMessage(
+            `Waktu isya akan segera tiba: ${now}`,
+            { modal: true },
+            { title: "Okee" }
+          );
+        }
       }
 
     } catch (error) {
@@ -177,7 +269,7 @@ export async function activate(context: vscode.ExtensionContext) {
       await getAllLocation();
       if (isHadistSuggetion === 'Ya') {
         fetchData();
-        setInterval(fetchData, 360000);
+        setInterval(fetchData, timeReminderValue);
       }
       fetchDataWaktuSholat();
       setInterval(fetchDataWaktuSholat, 60000);
