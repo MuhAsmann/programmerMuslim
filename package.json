@@ -17,15 +17,7 @@
         "command": "extension.showPopup",
         "title": "Start As A Muslim Developer"
       }
-    ],
-    "views": {
-      "explorer": [
-        {
-          "id": "myTreeView",
-          "name": "My Tree View"
-        }
-      ]
-    }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

@@ -40,16 +40,52 @@ exports.activate = activate;
 exports.deactivate = deactivate;
 const vscode = __importStar(require("vscode"));
 const axios_1 = __importDefault(require("axios"));
-const TreeDataProvider_1 = require("./TreeDataProvider");
 const time_1 = require("./time");
-function activate(context) {
+const getAllLocation = async () => {
+    try {
+        const listLocation = [];
+        const response = await axios_1.default.get("https://api.myquran.com/v2/sholat/kota/semua");
+        const data = response.data.data;
+        listLocation.push(...data);
+        return listLocation;
+    }
+    catch (error) {
+        console.error(error);
+    }
+};
+const getJadwalSholat = async (locationId) => {
+    try {
+        const time = new time_1.Time().getHours();
+        const response = await axios_1.default.get(`https://api.myquran.com/v2/sholat/jadwal/${locationId.id}/${time.tanggal}`);
+        const data = response.data.data.jadwal;
+        return data;
+    }
+    catch (error) {
+        console.error(error);
+    }
+};
+async function activate(context) {
     // Membuat item di status bar
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     statusBarItem.text = "Fetching data...";
     statusBarItem.show();
     // Membuat TreeDataProvider
-    const treeDataProvider = new TreeDataProvider_1.MyTreeDataProvider();
-    vscode.window.registerTreeDataProvider("myTreeView", treeDataProvider);
+    // const treeDataProvider = new MyTreeDataProvider();
+    // vscode.window.registerTreeDataProvider("myTreeView", treeDataProvider);
+    let locationId;
+    const listLocation = await getAllLocation();
+    let waktu;
+    const now = new time_1.Time().getHours().waktu;
+    if (listLocation) {
+        const quickPickItems = listLocation.map(location => ({ label: location.lokasi, id: location.id }));
+        const selectedLocation = await vscode.window.showQuickPick(quickPickItems, {
+            placeHolder: "Pilih lokasi",
+        });
+        if (selectedLocation) {
+            locationId = { id: selectedLocation.id, lokasi: selectedLocation.label };
+            waktu = await getJadwalSholat(locationId);
+        }
+    }
     // Fungsi untuk hit API
     const fetchData = async () => {
         try {
@@ -62,8 +98,8 @@ function activate(context) {
             statusBarItem.command = "extension.showPopup";
             vscode.window.showInformationMessage(data.id, { modal: true }, { title: "Syukron" });
             // Update TreeView
-            const items = [new TreeDataProvider_1.MyTreeItem(data.id, vscode.TreeItemCollapsibleState.None)];
-            treeDataProvider.refresh(items);
+            // const items = [new MyTreeItem(data.id, vscode.TreeItemCollapsibleState.None)];
+            // treeDataProvider.refresh(items);
         }
         catch (error) {
             statusBarItem.text = "Failed to fetch data";
@@ -72,11 +108,6 @@ function activate(context) {
     };
     const fetchDataWaktuSholat = async () => {
         try {
-            const time = new time_1.Time().getHours();
-            const now = time.waktu;
-            const response = await axios_1.default.get(`https://api.myquran.com/v2/sholat/jadwal/1219/${time.tanggal}`);
-            const data = response.data.data.jadwal;
-            const waktu = data;
             if (now === waktu.imsak) {
                 vscode.window.showWarningMessage(`Waktu imsak sekarang: ${now}`, { modal: true }, { title: "Okee" });
             }
@@ -112,10 +143,19 @@ function activate(context) {
         vscode.window.showInformationMessage("Ini adalah info detail dari data yang di-fetch");
     });
     context.subscriptions.push(disposable, statusBarItem);
-    fetchData();
-    fetchDataWaktuSholat();
-    setInterval(fetchData, 360000);
-    setInterval(fetchDataWaktuSholat, 60000);
+    async function initialize() {
+        try {
+            await getAllLocation();
+            fetchData();
+            fetchDataWaktuSholat();
+            setInterval(fetchData, 360000);
+            setInterval(fetchDataWaktuSholat, 60000);
+        }
+        catch (error) {
+            console.error('Error initializing:', error);
+        }
+    }
+    initialize();
 }
 function deactivate() { }
 //# sourceMappingURL=extension.js.map

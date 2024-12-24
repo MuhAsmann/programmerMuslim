@@ -2,9 +2,39 @@ import * as vscode from "vscode";
 import axios, { options } from "axios";
 import { MyTreeDataProvider, MyTreeItem } from "./TreeDataProvider";
 import { Time } from "./time";
+import { LocationInterface, ResponseInterface, WaktuSholat } from "./inteface";
 
 
-export function activate(context: vscode.ExtensionContext) {
+const getAllLocation = async () => {
+  try {
+    const listLocation: LocationInterface[] = [];
+    const response = await axios.get<ResponseInterface>("https://api.myquran.com/v2/sholat/kota/semua");
+    const data = response.data.data;
+
+    listLocation.push(...data);
+
+    return listLocation;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const getJadwalSholat = async (locationId: LocationInterface) => {
+  try {
+    const time = new Time().getHours();
+
+    const response = await axios.get(`https://api.myquran.com/v2/sholat/jadwal/${locationId.id}/${time.tanggal}`);
+
+    const data = response.data.data.jadwal;
+
+    return data;
+
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export async function activate(context: vscode.ExtensionContext) {
   // Membuat item di status bar
   const statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left,
@@ -15,9 +45,27 @@ export function activate(context: vscode.ExtensionContext) {
   statusBarItem.show();
 
   // Membuat TreeDataProvider
-  const treeDataProvider = new MyTreeDataProvider();
-  vscode.window.registerTreeDataProvider("myTreeView", treeDataProvider);
+  // const treeDataProvider = new MyTreeDataProvider();
+  // vscode.window.registerTreeDataProvider("myTreeView", treeDataProvider);
 
+  let locationId: LocationInterface;
+
+  const listLocation = await getAllLocation();
+  let waktu: WaktuSholat;
+  const now = new Time().getHours().waktu;
+
+  if (listLocation) {
+    const quickPickItems = listLocation.map(location => ({ label: location.lokasi, id: location.id }));
+
+    const selectedLocation = await vscode.window.showQuickPick(quickPickItems, {
+      placeHolder: "Pilih lokasi",
+    });
+
+    if (selectedLocation) {
+      locationId = { id: selectedLocation.id, lokasi: selectedLocation.label };
+      waktu = await getJadwalSholat(locationId);
+    }
+  }
   // Fungsi untuk hit API
   const fetchData = async () => {
     try {
@@ -38,26 +86,17 @@ export function activate(context: vscode.ExtensionContext) {
       );
 
       // Update TreeView
-      const items = [new MyTreeItem(data.id, vscode.TreeItemCollapsibleState.None)];
-      treeDataProvider.refresh(items);
+      // const items = [new MyTreeItem(data.id, vscode.TreeItemCollapsibleState.None)];
+      // treeDataProvider.refresh(items);
     } catch (error) {
       statusBarItem.text = "Failed to fetch data";
       console.error(error);
     }
   };
 
+
   const fetchDataWaktuSholat = async () => {
     try {
-
-      const time = new Time().getHours();
-
-      const now = time.waktu;
-
-      const response = await axios.get(`https://api.myquran.com/v2/sholat/jadwal/1219/${time.tanggal}`);
-
-      const data = response.data.data.jadwal;
-
-      const waktu: { waktu: string, imsak: string, subuh: string, terbit: string, dhuha: string, dzuhur: string, ashar: string, maghrib: string, isya: string } = data;
 
       if (now === waktu.imsak) {
         vscode.window.showWarningMessage(
@@ -127,10 +166,19 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(disposable, statusBarItem);
 
-  fetchData();
-  fetchDataWaktuSholat();
-  setInterval(fetchData, 360000);
-  setInterval(fetchDataWaktuSholat, 60000);
+  async function initialize() {
+    try {
+      await getAllLocation();
+      fetchData();
+      fetchDataWaktuSholat();
+      setInterval(fetchData, 360000);
+      setInterval(fetchDataWaktuSholat, 60000);
+    } catch (error) {
+      console.error('Error initializing:', error);
+    }
+  }
+
+  initialize();
 }
 
 export function deactivate() { }
