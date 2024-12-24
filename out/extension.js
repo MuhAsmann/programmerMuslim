@@ -86,6 +86,9 @@ async function activate(context) {
             waktu = await getJadwalSholat(locationId);
         }
     }
+    const isHadistSuggetion = await vscode.window.showQuickPick(['Ya', 'Tidak'], {
+        placeHolder: 'Apakah ingin mendapatkan hadist?',
+    });
     // Fungsi untuk hit API
     const fetchData = async () => {
         try {
@@ -146,9 +149,11 @@ async function activate(context) {
     async function initialize() {
         try {
             await getAllLocation();
-            fetchData();
+            if (isHadistSuggetion === 'Ya') {
+                fetchData();
+                setInterval(fetchData, 360000);
+            }
             fetchDataWaktuSholat();
-            setInterval(fetchData, 360000);
             setInterval(fetchDataWaktuSholat, 60000);
         }
         catch (error) {

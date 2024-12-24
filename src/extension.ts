@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
-import axios, { options } from "axios";
-import { MyTreeDataProvider, MyTreeItem } from "./TreeDataProvider";
+import axios from "axios";
 import { Time } from "./time";
 import { LocationInterface, ResponseInterface, WaktuSholat } from "./inteface";
 
@@ -66,6 +65,13 @@ export async function activate(context: vscode.ExtensionContext) {
       waktu = await getJadwalSholat(locationId);
     }
   }
+
+  const isHadistSuggetion = await vscode.window.showQuickPick(
+    ['Ya', 'Tidak'],
+    {
+      placeHolder: 'Apakah ingin mendapatkan hadist?',
+    }
+  );
   // Fungsi untuk hit API
   const fetchData = async () => {
     try {
@@ -169,9 +175,11 @@ export async function activate(context: vscode.ExtensionContext) {
   async function initialize() {
     try {
       await getAllLocation();
-      fetchData();
+      if (isHadistSuggetion === 'Ya') {
+        fetchData();
+        setInterval(fetchData, 360000);
+      }
       fetchDataWaktuSholat();
-      setInterval(fetchData, 360000);
       setInterval(fetchDataWaktuSholat, 60000);
     } catch (error) {
       console.error('Error initializing:', error);
