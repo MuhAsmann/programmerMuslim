@@ -36,3 +36,8 @@ We welcome contributions from everyone. Please create a pull request or open an 
 This extension is licensed under the [MIT License](LICENSE).
 
 Thank you for using the Programmer Muslim extension!
+
+## Thanks to
+
+- [My Quran](https://api.myquran.com/)
+- [Freepik](https://www.freepik.com/)
