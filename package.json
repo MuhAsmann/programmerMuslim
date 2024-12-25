@@ -19,6 +19,23 @@
       }
     ]
   },
+  "icon": "assets/icon.png",
+  "publisher": "muhasmann",
+  "author": {
+    "name": "Muhammad Asman",
+    "url": "https://github.com/MuhAsmann"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MuhAsmann/programmerMuslim"
+  },
+  "maintainers": [
+    {
+      "name": "Muhammad Asman",
+      "email": "muhammadasmann@gmail.com",
+      "url": "https://www.linkedin.com/in/muh-asmann"
+    }
+  ],
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
