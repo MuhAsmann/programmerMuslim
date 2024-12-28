@@ -37,7 +37,6 @@ const getJadwalSholat = async (locationId: LocationInterface) => {
 
 const getNextPrayerTime = (now: string, waktu: any) => {
   const prayerTimes = [
-    { name: 'imsak', time: waktu.imsak },
     { name: 'subuh', time: waktu.subuh },
     { name: 'terbit', time: waktu.terbit },
     { name: 'dhuha', time: waktu.dhuha },
@@ -98,7 +97,7 @@ export async function activate(context: vscode.ExtensionContext) {
           return null;
         }
       }
-    );
+    ) || '5';
 
     reminderBeforeValue = Number(reminderBefore).valueOf() * 60000;
   }
@@ -124,7 +123,7 @@ export async function activate(context: vscode.ExtensionContext) {
           return null;
         }
       }
-    );
+    ) || '30';
   }
 
   const timeReminderValue = Number(timeReminder).valueOf() * 60000;

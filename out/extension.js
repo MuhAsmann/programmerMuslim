@@ -68,7 +68,6 @@ const getJadwalSholat = async (locationId) => {
 };
 const getNextPrayerTime = (now, waktu) => {
     const prayerTimes = [
-        { name: 'imsak', time: waktu.imsak },
         { name: 'subuh', time: waktu.subuh },
         { name: 'terbit', time: waktu.terbit },
         { name: 'dhuha', time: waktu.dhuha },
@@ -114,7 +113,7 @@ async function activate(context) {
                 }
                 return null;
             }
-        });
+        }) || '5';
         reminderBeforeValue = Number(reminderBefore).valueOf() * 60000;
     }
     const isHadistSuggetion = await vscode.window.showQuickPick([constans_1.Choice.YA, constans_1.Choice.TIDAK], {
@@ -131,7 +130,7 @@ async function activate(context) {
                 }
                 return null;
             }
-        });
+        }) || '30';
     }
     const timeReminderValue = Number(timeReminder).valueOf() * 60000;
     // Fungsi untuk hit API
